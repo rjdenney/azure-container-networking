@@ -51,7 +51,9 @@ func (rc *RequestControllerFake) CarveIPConfigsAndAddToStatusAndCNS(numberOfIPCo
 			Name: uuid.New().String(),
 			IP:   rc.ip.String(),
 		}
-		rc.NNC.Status.NetworkContainers[0].IPAssignments = append(rc.NNC.Status.NetworkContainers[0].IPAssignments, ipconfigCRD)
+		for j := range rc.NNC.Status.NetworkContainers {
+			rc.NNC.Status.NetworkContainers[j].IPAssignments = append(rc.NNC.Status.NetworkContainers[j].IPAssignments, ipconfigCRD)
+		}
 
 		ipconfigCNS := cns.IPConfigurationStatus{
 			ID:        ipconfigCRD.Name,
@@ -96,15 +98,17 @@ func (rc *RequestControllerFake) Reconcile(removePendingReleaseIPs bool) error {
 		// mimic DNC removing IPConfigs from the CRD
 		for _, notInUseIPConfigName := range rc.NNC.Spec.IPsNotInUse {
 
-			// remove ipconfig from status
-			index := 0
-			for _, ipconfig := range rc.NNC.Status.NetworkContainers[0].IPAssignments {
-				if notInUseIPConfigName == ipconfig.Name {
-					break
+			for i := range rc.NNC.Status.NetworkContainers {
+				// remove ipconfig from status
+				index := 0
+				for _, ipconfig := range rc.NNC.Status.NetworkContainers[i].IPAssignments {
+					if notInUseIPConfigName == ipconfig.Name {
+						break
+					}
+					index++
 				}
-				index++
+				rc.NNC.Status.NetworkContainers[i].IPAssignments = remove(rc.NNC.Status.NetworkContainers[i].IPAssignments, index)
 			}
-			rc.NNC.Status.NetworkContainers[0].IPAssignments = remove(rc.NNC.Status.NetworkContainers[0].IPAssignments, index)
 
 		}
 	}
